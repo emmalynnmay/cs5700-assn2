@@ -16,9 +16,8 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
         var samples = DoubleArray(0);
         for (note in notes)
         {
-            println(note)
             val pitch = PianoNotes[note.pianoNote] ?: error("unknown note")   // FIXME: error handling??
-            val durationSeconds = SECONDS_IN_MINUTE / header.tempo // FIXME: error handling??
+            val durationSeconds = (SECONDS_IN_MINUTE / header.tempo) * note.beats // FIXME: error handling??
             samples += generate(pitch, durationSeconds, header.sampleRate, waveformStrategy::doStrategy)
         }
         return samples

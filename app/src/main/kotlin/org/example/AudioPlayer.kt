@@ -104,6 +104,7 @@ class AudioPlayer {
 
     private fun parseChannel(line: String, header: SongHeader) : Sound? 
     {
+        println("-------- Parsing a new channel! --------")
         // Trailing "|" produces a trailing empty segment, so drop blanks
         val segments = line.split("|").filter { it.isNotBlank() }
 
@@ -121,12 +122,12 @@ class AudioPlayer {
         var channel: Sound = Channel(waveformStrategy, notes, header)
 
         println(effects)
-        channel = processEffects(effects, channel)
+        channel = processEffects(effects, channel, header)
 
         return channel
     }
 
-    private fun processEffects(effects: List<String>, channel: Sound) : Sound 
+    private fun processEffects(effects: List<String>, channel: Sound, header: SongHeader) : Sound 
     {
         var sound: Sound = channel
         for (effect in effects) {
@@ -145,7 +146,7 @@ class AudioPlayer {
                     val decay = params[1]
                     val sustain = params[2]
                     println("ADS effect: attack=$attack, decay=$decay, sustain=$sustain")
-                    sound = ADSDecorator(channel, attack, decay, sustain)
+                    sound = ADSDecorator(channel, attack, decay, sustain, header.sampleRate)
                 }
                 "clip" -> {
                     val threshold = params[0]
@@ -153,9 +154,9 @@ class AudioPlayer {
                     sound = ClipDecorator(channel, threshold)
                 }
                 "tanh" -> {
-                    val gain = params[0]
-                    println("Tanh effect: gain=$gain")
-                    sound = TahnDecorator(channel, gain)
+                    val drive = params[0]
+                    println("Tanh effect: drive=$drive")
+                    sound = TanhDecorator(channel, drive)
                 }
                 else -> {
                     println("Unknown effect: $name")
