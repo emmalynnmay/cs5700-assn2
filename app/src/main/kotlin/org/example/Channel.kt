@@ -2,7 +2,7 @@ package org.example
 
 import kotlin.math.PI
 
-class Channel(private val waveformStrategy: WaveformStrategy, private val notes: List<Note>, private val sampleRate: Int) : Sound()
+class Channel(private val waveformStrategy: WaveformStrategy, private val notes: List<Note>, private val header: SongHeader) : Sound()
 {
     init 
     {
@@ -12,10 +12,15 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
 
     private fun buildSamples(): DoubleArray
     {
-        // TODO: go back and actually get all the notes
-        val a4 = PianoNotes["A4"] ?: error("unknown note")   // 440.0 Hz
-        val durationSeconds = 1.0
-        val samples = generate(a4, durationSeconds, sampleRate, waveformStrategy::doStrategy)
+        val SECONDS_IN_MINUTE: Double = 60.0
+        var samples = DoubleArray(0);
+        for (note in notes)
+        {
+            println(note)
+            val pitch = PianoNotes[note.pianoNote] ?: error("unknown note")   // FIXME: error handling??
+            val durationSeconds = SECONDS_IN_MINUTE / header.tempo // FIXME: error handling??
+            samples += generate(pitch, durationSeconds, header.sampleRate, waveformStrategy::doStrategy)
+        }
         return samples
     }
 

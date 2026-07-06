@@ -4,7 +4,7 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
-interface WaveformStrategy 
+interface WaveformStrategy
 {
     fun doStrategy(phase: Double): Double
 }

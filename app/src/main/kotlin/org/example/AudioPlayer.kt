@@ -118,7 +118,7 @@ class AudioPlayer {
 
         val notes = segments.drop(1).flatMap { measure -> parseMeasure(measure) }
 
-        var channel: Sound = Channel(waveformStrategy, notes, header.sampleRate)
+        var channel: Sound = Channel(waveformStrategy, notes, header)
 
         println(effects)
         channel = processEffects(effects, channel)
