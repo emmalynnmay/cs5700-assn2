@@ -1,41 +1,53 @@
 package org.example
 
-abstract class SoundDecorator(private val inputSound: Sound) : Sound
+abstract class SoundDecorator(protected val inputSound: Sound) : Sound()
 {
 }
 
-class VolumeDecorator(inputSound: Sound) : SoundDecorator(inputSound)
+class VolumeDecorator(inputSound: Sound, level: Double) : SoundDecorator(inputSound)
 {
-    override fun applyEffect(): DoubleArray
+    init
     {
         println("Applying volume decorator")
-        return DoubleArray(0)
+        println("We originally have ${inputSound.getSoundSamples().size}")
+        samples = inputSound.getSoundSamples()
+        // TODO: actually apply effect
+        println("We now have ${samples.size}")
     }
 }
 
-class TahnDecorator(inputSound: Sound) : SoundDecorator(inputSound)
+class TahnDecorator(inputSound: Sound, gain: Double) : SoundDecorator(inputSound)
 {
-    override fun applyEffect(): DoubleArray
+    init
     {
         println("Applying tahn decorator")
-        return DoubleArray(0)
+        println("We originally have ${inputSound.getSoundSamples().size}")
+        samples = inputSound.getSoundSamples()
+        // TODO: actually apply effect
+        println("We now have ${samples.size}")
     }
 }
 
-class ClipDecorator(inputSound: Sound) : SoundDecorator(inputSound)
+class ClipDecorator(inputSound: Sound, threshold: Double) : SoundDecorator(inputSound)
 {
-    override fun applyEffect(): DoubleArray
+    init
     {
         println("Applying clip decorator")
-        return DoubleArray(0)
+        println("We originally have ${inputSound.getSoundSamples().size}")
+        samples = inputSound.getSoundSamples()
+        // TODO: actually apply effect
+        println("We now have ${samples.size}")
     }
 }
 
-class ADSDecorator(inputSound: Sound) : SoundDecorator(inputSound)
+class ADSDecorator(inputSound: Sound, attack: Double, decay: Double, sustain: Double) : SoundDecorator(inputSound)
 {
-    override fun applyEffect(): DoubleArray
+    init
     {
         println("Applying ADS decorator")
-        return DoubleArray(0)
+        println("We originally have ${inputSound.getSoundSamples().size}")
+        samples = inputSound.getSoundSamples()
+        // TODO: actually apply effect
+        println("We now have ${samples.size}")
     }
 }
