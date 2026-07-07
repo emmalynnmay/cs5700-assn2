@@ -139,24 +139,24 @@ class AudioPlayer {
                 "vol" -> {
                     val level = params[0]
                     println("Volume effect: level=$level")
-                    sound = VolumeDecorator(channel, level)
+                    sound = VolumeDecorator(sound, level)
                 }
                 "ads" -> {
                     val attack = params[0]
                     val decay = params[1]
                     val sustain = params[2]
                     println("ADS effect: attack=$attack, decay=$decay, sustain=$sustain")
-                    sound = ADSDecorator(channel, attack, decay, sustain, header.sampleRate)
+                    sound = ADSDecorator(sound, attack, decay, sustain, header.sampleRate)
                 }
                 "clip" -> {
                     val threshold = params[0]
                     println("Clip effect: threshold=$threshold")
-                    sound = ClipDecorator(channel, threshold)
+                    sound = ClipDecorator(sound, threshold)
                 }
                 "tanh" -> {
                     val drive = params[0]
                     println("Tanh effect: drive=$drive")
-                    sound = TanhDecorator(channel, drive)
+                    sound = TanhDecorator(sound, drive)
                 }
                 else -> {
                     println("Unknown effect: $name")

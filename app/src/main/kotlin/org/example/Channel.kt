@@ -32,6 +32,12 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
         val sampleCount = (sampleRate * durationSeconds).toInt()
         val samples = DoubleArray(sampleCount)
 
+        if (frequency == 0.0)
+        {
+            samples.fill(0.0)
+            return samples
+        }
+
         val phaseIncrement = 2.0 * PI * frequency / sampleRate   // radians per sample
         var phase = 0.0
         for (n in 0 until sampleCount) {
