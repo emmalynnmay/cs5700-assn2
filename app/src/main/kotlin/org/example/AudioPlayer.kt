@@ -119,15 +119,17 @@ class AudioPlayer {
 
         val notes = segments.drop(1).flatMap { measure -> parseMeasure(measure) }
 
-        var channel: Sound = Channel(waveformStrategy, notes, header)
+        val channel = Channel(waveformStrategy, notes, header)
+        val noteStartSamples = channel.getNoteStartSamples()
+        var sound: Sound = channel
 
         println(effects)
-        channel = processEffects(effects, channel, header)
+        sound = processEffects(effects, sound, header, noteStartSamples)
 
-        return channel
+        return sound
     }
 
-    private fun processEffects(effects: List<String>, channel: Sound, header: SongHeader) : Sound 
+    private fun processEffects(effects: List<String>, channel: Sound, header: SongHeader, noteStartSamples: List<Int>) : Sound 
     {
         var sound: Sound = channel
         for (effect in effects) {
@@ -139,24 +141,24 @@ class AudioPlayer {
                 "vol" -> {
                     val level = params[0]
                     println("Volume effect: level=$level")
-                    sound = VolumeDecorator(sound, level)
+                    sound = VolumeDecorator(sound, level, noteStartSamples)
                 }
                 "ads" -> {
                     val attack = params[0]
                     val decay = params[1]
                     val sustain = params[2]
                     println("ADS effect: attack=$attack, decay=$decay, sustain=$sustain")
-                    sound = ADSDecorator(sound, attack, decay, sustain, header.sampleRate)
+                    sound = ADSDecorator(sound, attack, decay, sustain, header.sampleRate, noteStartSamples)
                 }
                 "clip" -> {
                     val threshold = params[0]
                     println("Clip effect: threshold=$threshold")
-                    sound = ClipDecorator(sound, threshold)
+                    sound = ClipDecorator(sound, threshold, noteStartSamples)
                 }
                 "tanh" -> {
                     val drive = params[0]
                     println("Tanh effect: drive=$drive")
-                    sound = TanhDecorator(sound, drive)
+                    sound = TanhDecorator(sound, drive, noteStartSamples)
                 }
                 else -> {
                     println("Unknown effect: $name")

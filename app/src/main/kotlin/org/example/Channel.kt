@@ -10,14 +10,35 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
         samples = buildSamples()
     }
 
-    private fun buildSamples(): DoubleArray
+    fun getNoteStartSamples(): List<Int>
+    {
+        val starts = mutableListOf<Int>()
+        var currentSample = 0
+
+        for (note in notes)
+        {
+            starts.add(currentSample)
+            val durationSeconds = calculateDurationSeconds(header.tempo, note.beats)
+            val sampleCount = (header.sampleRate * durationSeconds).toInt()
+            currentSample += sampleCount
+        }
+
+        return starts
+    }
+
+    private fun calculateDurationSeconds(tempo: Int, beats: Double): Double
     {
         val SECONDS_IN_MINUTE: Double = 60.0
+        return (SECONDS_IN_MINUTE / tempo) * beats // FIXME: error handling??
+    }
+
+    private fun buildSamples(): DoubleArray
+    {
         var samples = DoubleArray(0);
         for (note in notes)
         {
             val pitch = PianoNotes[note.pianoNote] ?: error("unknown note")   // FIXME: error handling??
-            val durationSeconds = (SECONDS_IN_MINUTE / header.tempo) * note.beats // FIXME: error handling??
+            val durationSeconds = calculateDurationSeconds(header.tempo, note.beats)
             samples += generate(pitch, durationSeconds, header.sampleRate, waveformStrategy::doStrategy)
         }
         return samples

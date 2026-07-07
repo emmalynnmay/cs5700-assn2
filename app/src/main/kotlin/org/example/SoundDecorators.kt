@@ -1,20 +1,17 @@
 package org.example
 
-abstract class SoundDecorator(protected val inputSound: Sound) : Sound() {}
+abstract class SoundDecorator(protected val inputSound: Sound, protected val noteStartSamples: List<Int>) : Sound() {}
 
-class VolumeDecorator(inputSound: Sound, level: Double) : SoundDecorator(inputSound)
+class VolumeDecorator(inputSound: Sound, level: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
 {
     init
     {
-        // FIXME: remove logs
         println("Applying volume decorator")
-        // println("We originally have ${inputSound.getSoundSamples()[100]}")
         samples = DoubleArray(inputSound.getSoundSamples().size) { inputSound.getSoundSamples()[it] * level }
-        // println("We now have ${samples[100]}")
     }
 }
 
-class TanhDecorator(inputSound: Sound, drive: Double) : SoundDecorator(inputSound)
+class TanhDecorator(inputSound: Sound, drive: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
 {
     init
     {
@@ -26,7 +23,7 @@ class TanhDecorator(inputSound: Sound, drive: Double) : SoundDecorator(inputSoun
     }
 }
 
-class ClipDecorator(inputSound: Sound, threshold: Double) : SoundDecorator(inputSound)
+class ClipDecorator(inputSound: Sound, threshold: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
 {
     init
     {
@@ -38,33 +35,38 @@ class ClipDecorator(inputSound: Sound, threshold: Double) : SoundDecorator(input
     }
 }
 
-class ADSDecorator(inputSound: Sound, attackEnd: Double, decayEnd: Double, sustain: Double, sampleRate: Int) : SoundDecorator(inputSound)
+class ADSDecorator(
+    inputSound: Sound, 
+    attackEnd: Double, 
+    decayEnd: Double, 
+    sustain: Double, 
+    sampleRate: Int, 
+    noteStartSamples: List<Int>
+) : SoundDecorator(inputSound, noteStartSamples)
 {
     init
     {
-        // FIXME: this doesn't work- it needs to be applied individually for each note
-        println("Applying ADS decorator")
         val originalSamples = inputSound.getSoundSamples()
 
-        val attackEndSample = (attackEnd * sampleRate).toInt()
-        val decayEndSample = (decayEnd * sampleRate).toInt()
+        val attackEndOffset = (attackEnd * sampleRate).toInt()
+        val decayEndOffset = (decayEnd * sampleRate).toInt()
 
         samples = DoubleArray(originalSamples.size) { i ->
+            // Find which note this sample belongs to: the last note start <= i
+            val noteStart = noteStartSamples.lastOrNull { it <= i } ?: 0
+            val offset = i - noteStart
+
             val envelope = when {
-                i < attackEndSample -> {
-                    // Ramp 0 -> 1 during attack
-                    i.toDouble() / attackEndSample
+                offset < attackEndOffset -> {
+                    if (attackEndOffset == 0) 1.0 else offset.toDouble() / attackEndOffset
                 }
-                i < decayEndSample -> {
-                    // Ramp 1 -> sustain during decay
-                    val decayProgress = (i - attackEndSample).toDouble() / (decayEndSample - attackEndSample)
+                offset < decayEndOffset -> {
+                    val decayProgress = (offset - attackEndOffset).toDouble() / (decayEndOffset - attackEndOffset)
                     1.0 - decayProgress * (1.0 - sustain)
                 }
-                else -> {
-                    // Hold at sustain level
-                    sustain
-                }
+                else -> sustain
             }
+
             originalSamples[i] * envelope
         }
     }
