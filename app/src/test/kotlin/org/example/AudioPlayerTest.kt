@@ -161,7 +161,7 @@ class AudioPlayerTest {
     fun `parseChannel handles a channel with only settings and no note segments`() {
         val result = player.callPrivate("parseChannel", "sin", header)
         assertIs<Channel>(result)
-        assertTrue((result as Channel).getSoundSamples().isEmpty())
+        assertTrue((result as Channel).samples().isEmpty())
     }
 
     @Test
@@ -306,19 +306,19 @@ class AudioPlayerTest {
     }
 
     @Test
-    fun `playSong with a header but no channel lines throws instead of silently succeeding`() {
+    fun `playSong with a header but no channel lines has nothing to play, but doesn't throw`() {
         // Reproduces the mix() empty-list bug end-to-end: a header-only file has
         // zero parsed channels, and mix(emptyList()) throws NoSuchElementException
         // before playSong ever reaches audio playback.
         val file = tempFile("100 4 60")
-        assertFailsWith<NoSuchElementException> { player.playSong(file.path) }
+        player.playSong(file.path)
     }
 
     @Test
-    fun `playSong with only unrecognized channel lines throws via mix on empty channel list`() {
+    fun `playSong with only unrecognized channel lines has nothing to play, but doesn't throw`() {
         // Every channel line fails to parse (unknown waveform), so channels ends up
         // empty after filtering out the nulls -- same empty-list bug as above.
         val file = tempFile("100 4 60\nkazoo | C4 1.0")
-        assertFailsWith<NoSuchElementException> { player.playSong(file.path) }
+        player.playSong(file.path)
     }
 }

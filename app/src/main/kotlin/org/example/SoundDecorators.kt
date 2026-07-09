@@ -1,54 +1,61 @@
 package org.example
 
-abstract class SoundDecorator(protected val inputSound: Sound, protected val noteStartSamples: List<Int>) : Sound() {}
+abstract class SoundDecorator(protected val wrapped: Sound) : Sound
 
-class VolumeDecorator(inputSound: Sound, level: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
+class VolumeDecorator(wrapped: Sound, private val level: Double) : SoundDecorator(wrapped) 
 {
-    init
-    {
-        samples = DoubleArray(inputSound.getSoundSamples().size) { inputSound.getSoundSamples()[it] * level }
-    }
+    override fun samples(): DoubleArray =
+        wrapped.samples().map { it * level }.toDoubleArray()
 }
 
-class TanhDecorator(inputSound: Sound, drive: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
+class TanhDecorator(wrapped: Sound, private val drive: Double) : SoundDecorator(wrapped) 
 {
-    init
+    override fun samples(): DoubleArray
     {
-        val originalSamples = inputSound.getSoundSamples()
-        samples = DoubleArray(originalSamples.size) { i ->
+        val originalSamples = wrapped.samples()
+        return DoubleArray(originalSamples.size) { i ->
             kotlin.math.tanh(originalSamples[i] * drive)
         }
     }
 }
 
-class ClipDecorator(inputSound: Sound, threshold: Double, noteStartSamples: List<Int>) : SoundDecorator(inputSound, noteStartSamples)
+class ClipDecorator(wrapped: Sound, private val threshold: Double) : SoundDecorator(wrapped) 
 {
     init
     {
-        val originalSamples = inputSound.getSoundSamples()
-        samples = DoubleArray(originalSamples.size) { i ->
+        if (threshold < 0)
+        {
+            throw IllegalArgumentException(
+                "Threshold cannot be less than 0."
+            )
+        }
+    }
+    override fun samples(): DoubleArray
+    {
+        val originalSamples = wrapped.samples()
+        return DoubleArray(originalSamples.size) { i ->
             originalSamples[i].coerceIn(-threshold, threshold)
         }
     }
 }
 
 class ADSDecorator(
-    inputSound: Sound, 
-    attackEnd: Double, 
-    decayEnd: Double, 
-    sustain: Double, 
-    sampleRate: Int, 
-    noteStartSamples: List<Int>
-) : SoundDecorator(inputSound, noteStartSamples)
+    wrapped: Sound, 
+    private val attackEnd: Double,
+    private val decayEnd: Double,
+    private val sustain: Double,
+    private val sampleRate: Int,
+    private val noteStartSamples: List<Int>
+) : SoundDecorator(wrapped) 
 {
-    init
+    override fun samples(): DoubleArray
     {
-        val originalSamples = inputSound.getSoundSamples()
+        val originalSamples = wrapped.samples()
 
         val attackEndOffset = (attackEnd * sampleRate).toInt()
         val decayEndOffset = (decayEnd * sampleRate).toInt()
 
-        samples = DoubleArray(originalSamples.size) { i ->
+        return DoubleArray(originalSamples.size) { i ->
             // Find which note this sample belongs to: the last note start <= i
             val noteStart = noteStartSamples.lastOrNull { it <= i } ?: 0
             val offset = i - noteStart
@@ -58,8 +65,15 @@ class ADSDecorator(
                     if (attackEndOffset == 0) 1.0 else offset.toDouble() / attackEndOffset
                 }
                 offset < decayEndOffset -> {
-                    val decayProgress = (offset - attackEndOffset).toDouble() / (decayEndOffset - attackEndOffset)
-                    1.0 - decayProgress * (1.0 - sustain)
+                    if (attackEndOffset == decayEndOffset)
+                    {
+                        sustain
+                    }
+                    else
+                    {
+                        val decayProgress = (offset - attackEndOffset).toDouble() / (decayEndOffset - attackEndOffset)
+                        1.0 - decayProgress * (1.0 - sustain)
+                    }
                 }
                 else -> sustain
             }

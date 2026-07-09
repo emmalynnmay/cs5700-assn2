@@ -31,7 +31,7 @@ class ChannelTest {
     fun `empty notes list produces empty samples and empty note starts`() {
         val header = SongHeader(sampleRate = 44100, beatsPerMeasure = 4, tempo = 120)
         val channel = Channel(ThrowingStrategy(), emptyList(), header)
-        assertTrue(channel.getSoundSamples().isEmpty())
+        assertTrue(channel.samples().isEmpty())
         assertTrue(channel.getNoteStartSamples().isEmpty())
     }
 
@@ -43,7 +43,7 @@ class ChannelTest {
         val notes = listOf(Note(pianoNote = "-", beats = 1.0))
         // ThrowingStrategy would fail the test if the shape closure were ever called.
         val channel = Channel(ThrowingStrategy(), notes, header)
-        val samples = channel.getSoundSamples()
+        val samples = channel.samples()
         assertEquals(100, samples.size) // 1 beat at tempo 60 = 1s * 100 samples/sec
         assertTrue(samples.all { it == 0.0 })
     }
@@ -53,7 +53,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 50, beatsPerMeasure = 4, tempo = 60)
         val notes = listOf(Note(pianoNote = "NotARealNote", beats = 1.0))
         val channel = Channel(ThrowingStrategy(), notes, header)
-        val samples = channel.getSoundSamples()
+        val samples = channel.samples()
         assertEquals(50, samples.size)
         assertTrue(samples.all { it == 0.0 })
     }
@@ -63,7 +63,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 20, beatsPerMeasure = 4, tempo = 60)
         val notes = listOf(Note(pianoNote = "", beats = 1.0))
         val channel = Channel(ThrowingStrategy(), notes, header)
-        assertTrue(channel.getSoundSamples().all { it == 0.0 })
+        assertTrue(channel.samples().all { it == 0.0 })
     }
 
     // ================= Sample count math =================
@@ -74,7 +74,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 8, beatsPerMeasure = 4, tempo = 60)
         val notes = listOf(Note(pianoNote = "A4", beats = 1.0))
         val channel = Channel(RecordingStrategy(), notes, header)
-        assertEquals(8, channel.getSoundSamples().size)
+        assertEquals(8, channel.samples().size)
     }
 
     @Test
@@ -86,7 +86,7 @@ class ChannelTest {
             Note(pianoNote = "C4", beats = 2.0)    // 20 samples
         )
         val channel = Channel(RecordingStrategy(), notes, header)
-        assertEquals(35, channel.getSoundSamples().size)
+        assertEquals(35, channel.samples().size)
     }
 
     @Test
@@ -97,7 +97,7 @@ class ChannelTest {
             Note(pianoNote = "A4", beats = 1.0)
         )
         val channel = Channel(RecordingStrategy(), notes, header)
-        assertEquals(10, channel.getSoundSamples().size) // only the second note contributes
+        assertEquals(10, channel.samples().size) // only the second note contributes
     }
 
     // ================= getNoteStartSamples =================
@@ -146,7 +146,7 @@ class ChannelTest {
         val strategy = RecordingStrategy()
         val channel = Channel(strategy, notes, header)
 
-        assertEquals(880, channel.getSoundSamples().size)
+        assertEquals(880, channel.samples().size)
         assertEquals(880, strategy.recordedPhases.size)
         assertEquals(0.0, strategy.recordedPhases[0], tolerance)
         assertEquals(PI, strategy.recordedPhases[1], tolerance)
@@ -159,7 +159,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 5, beatsPerMeasure = 4, tempo = 60)
         val notes = listOf(Note(pianoNote = "A4", beats = 1.0))
         val channel = Channel(RecordingStrategy(output = 0.42), notes, header)
-        assertTrue(channel.getSoundSamples().all { it == 0.42 })
+        assertTrue(channel.samples().all { it == 0.42 })
     }
 
     // ================= Invalid / unexpected inputs =================
@@ -189,7 +189,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 10, beatsPerMeasure = 4, tempo = 0)
         val notes = listOf(Note(pianoNote = "A4", beats = 0.0))
         val channel = Channel(RecordingStrategy(), notes, header)
-        assertTrue(channel.getSoundSamples().isEmpty())
+        assertTrue(channel.samples().isEmpty())
         assertEquals(listOf(0), channel.getNoteStartSamples())
     }
 
@@ -198,7 +198,7 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 0, beatsPerMeasure = 4, tempo = 60)
         val notes = listOf(Note(pianoNote = "A4", beats = 4.0))
         val channel = Channel(RecordingStrategy(), notes, header)
-        assertTrue(channel.getSoundSamples().isEmpty())
+        assertTrue(channel.samples().isEmpty())
         assertEquals(listOf(0), channel.getNoteStartSamples())
     }
 
@@ -207,8 +207,8 @@ class ChannelTest {
         val header = SongHeader(sampleRate = 10, beatsPerMeasure = 4, tempo = 60)
         val notes = List(5) { Note(pianoNote = "-", beats = 1.0) }
         val channel = Channel(ThrowingStrategy(), notes, header)
-        assertEquals(50, channel.getSoundSamples().size)
-        assertTrue(channel.getSoundSamples().all { it == 0.0 })
+        assertEquals(50, channel.samples().size)
+        assertTrue(channel.samples().all { it == 0.0 })
         assertEquals(listOf(0, 10, 20, 30, 40), channel.getNoteStartSamples())
     }
 }

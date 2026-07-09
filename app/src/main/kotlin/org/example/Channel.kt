@@ -2,11 +2,17 @@ package org.example
 
 import kotlin.math.PI
 
-class Channel(private val waveformStrategy: WaveformStrategy, private val notes: List<Note>, private val header: SongHeader) : Sound()
+class Channel(private val waveformStrategy: WaveformStrategy, private val notes: List<Note>, private val header: SongHeader) : Sound
 {
+    private val samples: DoubleArray
     init 
     {
         samples = buildSamples()
+    }
+
+    override fun samples(): DoubleArray
+    {
+        return samples
     }
 
     fun getNoteStartSamples(): List<Int>

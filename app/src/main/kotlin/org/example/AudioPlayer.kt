@@ -31,8 +31,14 @@ class AudioPlayer {
         {
             if (channel != null)
             {
-                channelSamples += channel.getSoundSamples()
+                channelSamples += channel.samples()
             }
+        }
+
+        if (channelSamples.isEmpty())
+        {
+            println("No valid channels found! Nothing to play.")
+            return
         }
 
         val mixed = normalize(mix(channelSamples))
@@ -176,7 +182,7 @@ class AudioPlayer {
             when (name) {
                 "vol" -> {
                     val level = params[0]
-                    sound = VolumeDecorator(sound, level, noteStartSamples)
+                    sound = VolumeDecorator(sound, level)
                 }
                 "ads" -> {
                     val attack = params[0]
@@ -186,11 +192,11 @@ class AudioPlayer {
                 }
                 "clip" -> {
                     val threshold = params[0]
-                    sound = ClipDecorator(sound, threshold, noteStartSamples)
+                    sound = ClipDecorator(sound, threshold)
                 }
                 "tanh" -> {
                     val drive = params[0]
-                    sound = TanhDecorator(sound, drive, noteStartSamples)
+                    sound = TanhDecorator(sound, drive)
                 }
                 else -> {
                     println("Unknown effect is not being applied: $name")
