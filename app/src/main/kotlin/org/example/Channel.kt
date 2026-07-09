@@ -6,7 +6,6 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
 {
     init 
     {
-        println("Building channel samples!")
         samples = buildSamples()
     }
 
@@ -29,7 +28,7 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
     private fun calculateDurationSeconds(tempo: Int, beats: Double): Double
     {
         val SECONDS_IN_MINUTE: Double = 60.0
-        return (SECONDS_IN_MINUTE / tempo) * beats // FIXME: error handling??
+        return (SECONDS_IN_MINUTE / tempo) * beats
     }
 
     private fun buildSamples(): DoubleArray
@@ -37,7 +36,7 @@ class Channel(private val waveformStrategy: WaveformStrategy, private val notes:
         var samples = DoubleArray(0);
         for (note in notes)
         {
-            val pitch = PianoNotes[note.pianoNote] ?: error("unknown note")   // FIXME: error handling??
+            val pitch = PianoNotes[note.pianoNote] ?: 0.0
             val durationSeconds = calculateDurationSeconds(header.tempo, note.beats)
             samples += generate(pitch, durationSeconds, header.sampleRate, waveformStrategy::doStrategy)
         }

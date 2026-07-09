@@ -16,7 +16,6 @@ class AudioPlayer {
     
     fun playSong(filepath: String)
     {
-        println(filepath)
         val lines: List<String> = readFileLines(filepath)
         if (lines.isEmpty()) {
             println("No data to play")
@@ -41,7 +40,7 @@ class AudioPlayer {
         play(mixed, header.sampleRate)
     }
 
-    fun play(samples: DoubleArray, sampleRate: Int) {
+    private fun play(samples: DoubleArray, sampleRate: Int) {
         // 16-bit, mono, signed, little-endian PCM
         val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
         val line: SourceDataLine = AudioSystem.getSourceDataLine(format)
@@ -81,11 +80,35 @@ class AudioPlayer {
     }
 
     private fun parseHeader(line: String): SongHeader {
-        val tokens = line.trim().split(" ")
+        val tokens = line.trim().split(" ").filter { it.isNotEmpty() }
+        if (tokens.size != 3) 
+        {
+            throw IllegalArgumentException(
+                "Invalid header: expected 3 values (sampleRate beatsPerMeasure tempo), " +
+                    "got ${tokens.size} in line: \"$line\""
+            )
+        }
+        val sampleRate = tokens[0].toIntOrNull()
+            ?: throw IllegalArgumentException("Invalid sampleRate value: \"${tokens[0]}\"")
+        val beatsPerMeasure = tokens[1].toIntOrNull()
+            ?: throw IllegalArgumentException("Invalid beatsPerMeasure value: \"${tokens[1]}\"")
+        val tempo = tokens[2].toIntOrNull()
+            ?: throw IllegalArgumentException("Invalid tempo value: \"${tokens[2]}\"")
+
+        if (sampleRate <= 0) {
+            throw IllegalArgumentException("sampleRate must be positive, got $sampleRate")
+        }
+        if (beatsPerMeasure <= 0) {
+            throw IllegalArgumentException("beatsPerMeasure must be positive, got $beatsPerMeasure")
+        }
+        if (tempo <= 0) {
+            throw IllegalArgumentException("tempo must be positive, got $tempo")
+        }
+
         return SongHeader(
-            sampleRate = tokens[0].toInt(),
-            beatsPerMeasure = tokens[1].toInt(),
-            tempo = tokens[2].toInt()
+            sampleRate = sampleRate,
+            beatsPerMeasure = beatsPerMeasure,
+            tempo = tempo
         )
     }
 
@@ -104,11 +127,16 @@ class AudioPlayer {
 
     private fun parseChannel(line: String, header: SongHeader) : Sound? 
     {
-        println("-------- Parsing a new channel! --------")
         // Trailing "|" produces a trailing empty segment, so drop blanks
         val segments = line.split("|").filter { it.isNotBlank() }
 
-        val settingsTokens = segments[0].trim().split(" ")
+        val settingsTokens = segments[0].trim().split(" ").filter { it.isNotEmpty() }
+        if (settingsTokens.isEmpty()) {
+            throw IllegalArgumentException(
+                "Invalid channel: settings segment is empty in line: \"$line\""
+            )
+        }
+
         val waveformStrategy = getWaveformStrategy(settingsTokens[0])
         if (waveformStrategy == null)
         {
@@ -117,14 +145,24 @@ class AudioPlayer {
 
         val effects = settingsTokens.drop(1)
 
-        val notes = segments.drop(1).flatMap { measure -> parseMeasure(measure) }
+        val notes = try {
+            segments.drop(1).flatMap { measure -> parseMeasure(measure) }
+        } catch (e: Exception) {
+            println("Invalid channel: failed to parse measures in line: \"$line\", ${e}")
+            return null
+        }
 
         val channel = Channel(waveformStrategy, notes, header)
         val noteStartSamples = channel.getNoteStartSamples()
         var sound: Sound = channel
 
         println(effects)
-        sound = processEffects(effects, sound, header, noteStartSamples)
+        sound = try {
+            processEffects(effects, sound, header, noteStartSamples)
+        } catch (e: Exception) {
+            println("Invalid channel: failed to apply effects $effects in line: \"$line\", ${e}")
+            return null
+        }
 
         return sound
     }
@@ -170,11 +208,30 @@ class AudioPlayer {
 
     private fun parseMeasure(measure: String): List<Note> {
         val tokens = measure.trim().split(" ").filter { it.isNotBlank() }
-        // tokens come in pairs: note duration note duration ...
+
+        if (tokens.size % 2 != 0) {
+            throw IllegalArgumentException(
+                "Invalid measure: expected note/duration pairs, but got an odd number " +
+                    "of tokens (${tokens.size}) in measure: \"$measure\""
+            )
+        }
+
         return tokens.chunked(2).map { (pianoNote, beats) ->
+            val beatsValue = beats.toDoubleOrNull()
+                ?: throw IllegalArgumentException(
+                    "Invalid duration \"$beats\" for note \"$pianoNote\" in measure: \"$measure\""
+                )
+
+            if (beatsValue <= 0.0) {
+                throw IllegalArgumentException(
+                    "Duration must be positive, got $beatsValue for note \"$pianoNote\" " +
+                        "in measure: \"$measure\""
+                )
+            }
+
             Note(
                 pianoNote = pianoNote,
-                beats = beats.toDouble()
+                beats = beatsValue
             )
         }
     }

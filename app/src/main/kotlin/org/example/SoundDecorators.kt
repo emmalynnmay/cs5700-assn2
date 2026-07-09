@@ -6,7 +6,6 @@ class VolumeDecorator(inputSound: Sound, level: Double, noteStartSamples: List<I
 {
     init
     {
-        println("Applying volume decorator")
         samples = DoubleArray(inputSound.getSoundSamples().size) { inputSound.getSoundSamples()[it] * level }
     }
 }
@@ -15,7 +14,6 @@ class TanhDecorator(inputSound: Sound, drive: Double, noteStartSamples: List<Int
 {
     init
     {
-        println("Applying tanh decorator")
         val originalSamples = inputSound.getSoundSamples()
         samples = DoubleArray(originalSamples.size) { i ->
             kotlin.math.tanh(originalSamples[i] * drive)
@@ -27,7 +25,6 @@ class ClipDecorator(inputSound: Sound, threshold: Double, noteStartSamples: List
 {
     init
     {
-        println("Applying clip decorator")
         val originalSamples = inputSound.getSoundSamples()
         samples = DoubleArray(originalSamples.size) { i ->
             originalSamples[i].coerceIn(-threshold, threshold)

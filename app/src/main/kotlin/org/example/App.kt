@@ -1,8 +1,13 @@
 package org.example
 
 fun main(args: Array<String>) {
-    if (args.isNotEmpty()) {
+    if (args.isNotEmpty()) 
+    {
         val filepath = args[0]
         AudioPlayer().playSong(filepath)
+    }
+    else
+    {
+        println("Please input a song to play!")
     }
 }
