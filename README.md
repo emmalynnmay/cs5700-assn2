@@ -7,7 +7,7 @@ Emma May
 ## Usage
 To play a song, run: `./gradlew run --args="songs/sarias_song.txt"`
 
-To run tests, run: `./gradlew tests`
+To run tests, run: `./gradlew test`
 
 ## Notes
 To set up a new project, run: `gradle init`

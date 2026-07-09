@@ -35,7 +35,6 @@ class AudioPlayer {
             }
         }
 
-        println("We have this many channel samples: ${channelSamples.size}")
         val mixed = normalize(mix(channelSamples))
         play(mixed, header.sampleRate)
     }
@@ -156,7 +155,6 @@ class AudioPlayer {
         val noteStartSamples = channel.getNoteStartSamples()
         var sound: Sound = channel
 
-        println(effects)
         sound = try {
             processEffects(effects, sound, header, noteStartSamples)
         } catch (e: Exception) {
@@ -178,28 +176,24 @@ class AudioPlayer {
             when (name) {
                 "vol" -> {
                     val level = params[0]
-                    println("Volume effect: level=$level")
                     sound = VolumeDecorator(sound, level, noteStartSamples)
                 }
                 "ads" -> {
                     val attack = params[0]
                     val decay = params[1]
                     val sustain = params[2]
-                    println("ADS effect: attack=$attack, decay=$decay, sustain=$sustain")
                     sound = ADSDecorator(sound, attack, decay, sustain, header.sampleRate, noteStartSamples)
                 }
                 "clip" -> {
                     val threshold = params[0]
-                    println("Clip effect: threshold=$threshold")
                     sound = ClipDecorator(sound, threshold, noteStartSamples)
                 }
                 "tanh" -> {
                     val drive = params[0]
-                    println("Tanh effect: drive=$drive")
                     sound = TanhDecorator(sound, drive, noteStartSamples)
                 }
                 else -> {
-                    println("Unknown effect: $name")
+                    println("Unknown effect is not being applied: $name")
                 }
             }
         }
